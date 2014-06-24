@@ -1,0 +1,22 @@
+---
+- name: Install Jenkins on RHEL 6.5 
+  hosts: rhel-hosts
+  remote_user: root
+  tasks:
+  - name: add jenkins repo  
+    shell: wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo &&  rpm --import http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key
+  - name: ensure latest java sdk
+    yum: pkg=java state=latest
+  - name: ensure jenkins is the latest version
+    yum: pkg=jenkins state=latest
+    notify:  
+     - start jenkins
+  - name: add firewall rule for port 8080
+    shell: iptables -I INPUT -p tcp --dport 8080 -j ACCEPT && service iptables save
+    notify:  
+     - restart iptables
+  handlers:
+    - name: start jenkins
+      service:  name=jenkins state=started
+    - name: restart iptables
+      service: name=iptables state=restarted
